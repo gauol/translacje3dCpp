@@ -1,59 +1,77 @@
 #include "stdafx.h"
 #include "Cvector.h"
+#include "Cmatrix.h"
+
+#define X this->V[0]
+#define Y this->V[1]
+#define Z this->V[2]
+
 
 
 Cvector::Cvector()
 {
-	this->V[0] = 0;
-	this->V[1] = 0;
-	this->V[2] = 1;
+	X = 0;
+	Y = 0;
+	Z = 0;
+	this->V[3] = 1;
 }
 
-Cvector::Cvector(float x, float y)
+Cvector::Cvector(float x, float y, float z)
 {
-	this->V[0] = x;
-	this->V[1] = y;
-	this->V[2] = 1;
+	X = x;
+	Y = y;
+	Z = z;
+	this->V[3] = 1;
 }
 
 Cvector::~Cvector()
 {
 }
 
-void Cvector::SetVector(float x, float y) {
-	this->V[0] = x;
-	this->V[1] = y;
+void Cvector::SetVector(float x, float y, float z) {
+	X = x;
+	Y = y;
+	Z = z;
 }
 void Cvector::SetX(float x) {
-	this->V[0] = x;
+	X = x;
 }
 
 void Cvector::SetY(float y) {
-	this->V[1] = y;
+	Y = y;
+}
+
+void Cvector::SetZ(float z) {
+	Z = z;
 }
 
 float Cvector::GetX(void) {
-	return this->V[0];
+	return X;
 }
 
 float Cvector::GetY(void) {
-	return this->V[1];
+	return Y;
+}
+
+float Cvector::GetZ(void) {
+	return Z;
 }
 
 void Cvector::PrintVector(void) {
-	printf("[%.5f,%.5f,%d]", this->V[0], this->V[1], (int)this->V[2]);
+	printf("[%.5f,\t %.5f,\t %.5f,\t %d] \n\r", X, Y, Z, (int)this->V[3]);
 }
 
 Cvector Cvector::operator + (const Cvector a) {
 	Cvector suma;
-	for (int i = 0; i < 2; i++)
+	for (int i = 0; i < 3; i++)
 		suma.V[i] = this->V[i] + a.V[i];
 	return suma;
 }
 
 Cvector Cvector::operator - (const Cvector a) {
 	Cvector roznica;
-	for (int i = 0; i < 3; i++)
+	for (int i = 0; i < 4; i++)
 		roznica.V[i] = this->V[i] + a.V[i];
 	return roznica;
 }
+

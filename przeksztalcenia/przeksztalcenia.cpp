@@ -7,8 +7,6 @@
 #include "WindowRange.h"
 #include "Graphics2D.h"
 #include "Cmatrix.h"
-#include <thread>         // std::thread
-#include <chrono>
 
 // U¿ycie przestrzeni nazw "std"
 using namespace std;
@@ -30,17 +28,6 @@ INT_PTR CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
 
 void Paint(HWND hwnd, PAINTSTRUCT * ps);
 
-float rotator = 0;
-
-void foo() {
-	while (1) {
-		rotator += 0.1;
-		if (rotator >= 6.28)
-			rotator = 0;
-		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-	}
-}
-
 /*
 	_tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
               LPTSTR lpCmdLine, int nCmdShow);
@@ -57,8 +44,6 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
                      LPTSTR    lpCmdLine,
                      int       nCmdShow)
 {
-	std::thread first(foo);
-	//first.join();
 	UNREFERENCED_PARAMETER(hPrevInstance); // Argumenty nieu¿ywane w Win32
 	UNREFERENCED_PARAMETER(lpCmdLine);
 
@@ -288,17 +273,49 @@ class object {
 	int pointsNumber;
 	Cvector * pointsVectors;
 
+	class Edge {
+		int a, b;
+		public:
+			Edge() {
+
+			}
+
+			Edge(int a, int b){
+				this->a = a;
+				this->b = b;
+			}
+
+			int getA(void) {
+				return a;
+			}
+
+			int getB(void) {
+				return b;
+			}
+	};
+
+	int edgesNumbers;
+	Edge * edges;
+
 public:
-	object(float *X, float *Y, int n) {
+	object(float *X, float *Y, float *Z, int n) {
 		this->pointsNumber = n;
 		this->pointsVectors = new Cvector[this->pointsNumber];
-		for (int i = 0; i < this->pointsNumber; i++) this->pointsVectors[i] = Cvector(X[i], Y[i]);
+		for (int i = 0; i < this->pointsNumber; i++) this->pointsVectors[i] = Cvector(X[i], Y[i], Z[i]);
+	}
+
+	void defineEdges(int *a, int *b, int n) {
+		this->edgesNumbers = n;
+		this->edges = new Edge[this->edgesNumbers];
+		for (int i = 0; i < this->edgesNumbers; i++) this->edges[i] = Edge(a[i], b[i]);
 	}
 
 	void drawObject(Graphics2D gr) {
-		for (int i = 0; i < this->pointsNumber; i++)
-			gr.DrawLine(pointsVectors[i].GetX(), pointsVectors[i].GetY(), pointsVectors[i+1].GetX(), pointsVectors[i+1].GetY());
-		gr.DrawLine(pointsVectors[0].GetX(), pointsVectors[0].GetY(), pointsVectors[pointsNumber-1].GetX(), pointsVectors[pointsNumber-1].GetY());
+		for (int i = 0; i < this->edgesNumbers; i++) {
+			Cvector pointA = pointsVectors[edges[i].getA()].GetOrto();
+			Cvector pointB = pointsVectors[edges[i].getB()].GetOrto();
+			gr.DrawLine(pointA.GetX(), pointA.GetY(), pointB.GetX(), pointB.GetY());
+		}
 	}
 
 	void affineTransform(Cmatrix translacja) {
@@ -306,9 +323,6 @@ public:
 			this->pointsVectors[i] = translacja * this->pointsVectors[i];
 	}
 };
-
-
-
 
 /*
 	Procedura rysowania w obszarze roboczym okna aplikacji.
@@ -318,7 +332,6 @@ void Paint(HWND hwnd, PAINTSTRUCT * ps)
 
 	// Pobranie uchwytu kontekstu urz¹dzenia na podstawie uchwytu okna
 	HDC hdc= GetDC(hwnd); // lub: HDC hdc= ps->hdc;
-
 
 	// Utworzenie obiektu klasy Graphics2D za pomoc¹ konstruktora parametrowego dla danego kontekstu i zakresu okna
 	Graphics2D gr(hdc, &wr);
@@ -331,18 +344,30 @@ void Paint(HWND hwnd, PAINTSTRUCT * ps)
 	gr.DrawLine(0, -10, 0, 10);
 	
 	gr.SetPen(Graphics2D::cl_RED, PS_SOLID, 1);
-	float x[11] = { -1, -1, -3, -1, -3, 0, 3, 1, 3, 1, 1 },
-		y[11] = { 0, 1, 1, 2, 2, 3.5, 2, 2, 1, 1, 0};
+	float x[8] = { 0, 0, 2, 2,	 0, 0, 2, 2 },
+		  y[8] = { 0, 2, 0, 2,	 0, 2, 0, 2 },
+		  z[8] = { 0, 0, 0, 0,	 2, 2, 2, 2 };
+
+	/*float	x[11] = { 0, 0, 2, 2},
+			y[11] = { 0, 2, 0, 2},
+			z[11] = { 0, 0, 0, 2};*/
 
 	Cmatrix transformacja;
-	transformacja.SetTranslate(1,2);
+	transformacja.SetTranslate(1, 2, 3);
 	
-	transformacja.SetRotate(rotator);
 	//transformacja.SetRotate(1.1);
-	object choinka(x, y, 11);
-	choinka.affineTransform(transformacja);
+	object kostka(x, y, z, 12);
+	int a[12] = {0, 0, 1, 3,	 4, 4, 5, 7,	 0, 1, 2, 3},
+		b[12] = {1, 2, 3, 2,	 5, 6, 7, 6,	 4, 5, 6, 7};
 
-	choinka.drawObject(gr);
+	kostka.defineEdges(a, b, 12);
+	kostka.affineTransform(transformacja);
+
+	Cmatrix obrot;
+	obrot.SetRotateOX(0.2);
+	//kostka.affineTransform(obrot);
+
+	kostka.drawObject(gr);
 
 	//gr.DrawPolygon(x, y, 11);
 	

@@ -21,10 +21,10 @@
     <ClInclude Include="targetver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Cvector.h">
+    <ClInclude Include="Cmatrix.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Cmatrix.h">
+    <ClInclude Include="Cvector.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -35,10 +35,10 @@
     <ClCompile Include="testPrzeksztalcenia.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Cvector.cpp">
+    <ClCompile Include="Cmatrix.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Cmatrix.cpp">
+    <ClCompile Include="Cvector.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
