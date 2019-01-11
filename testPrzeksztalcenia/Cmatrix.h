@@ -10,6 +10,7 @@ public:
 	~Cmatrix(void);
 	void SetZero(void); //zeruje maciez
 	void SetIdentity(void); // maciez jednostkowa - jedynki na diagonalach
+	void SetOrto();
 	void SetTranslate(float tx, float ty, float tz);
 	void SetRotateOX(float phi);
 	void SetRotateOY(float phi);

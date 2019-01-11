@@ -312,8 +312,16 @@ public:
 
 	void drawObject(Graphics2D gr) {
 		for (int i = 0; i < this->edgesNumbers; i++) {
-			Cvector pointA = pointsVectors[edges[i].getA()].GetOrto();
-			Cvector pointB = pointsVectors[edges[i].getB()].GetOrto();
+			if(i == 0 )
+				gr.SetPen(Graphics2D::cl_RED, PS_SOLID, 1);
+			if(i == 4)
+				gr.SetPen(Graphics2D::cl_BLUE, PS_SOLID, 1);
+			if(i == 8)
+				gr.SetPen(Graphics2D::cl_CYAN, PS_SOLID, 1);
+
+			Cvector pointA = pointsVectors[edges[i].getA()].GetPersp(0, 0, 12);
+			Cvector pointB = pointsVectors[edges[i].getB()].GetPersp(0, 0, 12);
+
 			gr.DrawLine(pointA.GetX(), pointA.GetY(), pointB.GetX(), pointB.GetY());
 		}
 	}
@@ -340,10 +348,9 @@ void Paint(HWND hwnd, PAINTSTRUCT * ps)
 	wr.SetRange(-10.0, -10.0, 10.0, 10.0);
 	gr.Update();
 
-	gr.DrawLine(-10, 0, 10, 0);
-	gr.DrawLine(0, -10, 0, 10);
+	//gr.DrawLine(-10, 0, 10, 0);
+	//gr.DrawLine(0, -10, 0, 10);
 	
-	gr.SetPen(Graphics2D::cl_RED, PS_SOLID, 1);
 	float x[8] = { 0, 0, 2, 2,	 0, 0, 2, 2 },
 		  y[8] = { 0, 2, 0, 2,	 0, 2, 0, 2 },
 		  z[8] = { 0, 0, 0, 0,	 2, 2, 2, 2 };
@@ -352,21 +359,27 @@ void Paint(HWND hwnd, PAINTSTRUCT * ps)
 			y[11] = { 0, 2, 0, 2},
 			z[11] = { 0, 0, 0, 2};*/
 
-	Cmatrix transformacja;
-	transformacja.SetTranslate(1, 2, 3);
-	
-	//transformacja.SetRotate(1.1);
+
 	object kostka(x, y, z, 12);
 	int a[12] = {0, 0, 1, 3,	 4, 4, 5, 7,	 0, 1, 2, 3},
 		b[12] = {1, 2, 3, 2,	 5, 6, 7, 6,	 4, 5, 6, 7};
 
 	kostka.defineEdges(a, b, 12);
+	
+
+	Cmatrix transformacja;
+	transformacja.SetTranslate(1, 2, 3);
+	transformacja.SetRotateOY(1.1);
+	//transformacja.SetScale(0.9);
 	kostka.affineTransform(transformacja);
 
 	Cmatrix obrot;
 	obrot.SetRotateOX(0.2);
-	//kostka.affineTransform(obrot);
+	kostka.affineTransform(obrot);
 
+	Cmatrix skala;
+	skala.SetScale(2,3,4);
+	kostka.affineTransform(skala);
 	kostka.drawObject(gr);
 
 	//gr.DrawPolygon(x, y, 11);

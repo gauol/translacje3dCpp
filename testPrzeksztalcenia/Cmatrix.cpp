@@ -28,6 +28,12 @@ void Cmatrix::SetIdentity(void) {
 				this->M[i][j] = 0.0f;
 }
 
+void Cmatrix::SetOrto() {
+	this->SetIdentity();
+	this->M[2][2] = 0;
+}
+
+
 void Cmatrix::SetTranslate(float tx, float ty, float tz) {
 	this->SetIdentity();
 	this->M[0][3] = tx;  // wpierw wiersz potem kolumna M[wiersz][kolumna]
@@ -41,6 +47,8 @@ void Cmatrix::SetRotateOX(float phi) {
 	this->M[1][2] = -sinf(phi);
 	this->M[2][1] = sinf(phi);
 	this->M[2][2] = cosf(phi);
+	this->M[0][0] = 1;
+
 }
 
 void Cmatrix::SetRotateOY(float phi) {
@@ -49,6 +57,7 @@ void Cmatrix::SetRotateOY(float phi) {
 	this->M[0][2] = sinf(phi);
 	this->M[2][0] = -sinf(phi);
 	this->M[2][2] = cosf(phi);
+	this->M[1][1] = 1;
 }
 
 void Cmatrix::SetRotateOZ(float phi) {
@@ -57,6 +66,7 @@ void Cmatrix::SetRotateOZ(float phi) {
 	this->M[0][1] = -sinf(phi);
 	this->M[1][0] = sinf(phi);
 	this->M[1][1] = cosf(phi);
+	this->M[2][2] = 1;
 }
 
 void Cmatrix::SetScale(float sx, float sy, float sz) {
@@ -67,10 +77,9 @@ void Cmatrix::SetScale(float sx, float sy, float sz) {
 }
 
 void Cmatrix::SetScale(float s) {
-	this->SetZero();
+	this->SetIdentity();
 	this->M[3][3] = 1/s;
 }
-
 
 void Cmatrix::PrintMartix() {
 	printf("\n\r");
@@ -97,7 +106,7 @@ Cmatrix Cmatrix::operator * (const Cmatrix B) {
 
 Cvector Cmatrix::operator * (const Cvector x) {
 	Cvector result;
-	for (size_t i = 0; i < 3; i++){
+	for (size_t i = 0; i < 4; i++){
 		float suma = 0.0f;
 		for (size_t j = 0; j < 4; j++)
 			suma += this->M[i][j] * x.V[j];

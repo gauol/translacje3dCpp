@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Cvector.h"
 #include "Cmatrix.h"
+#include <cmath>
 
 #define X this->V[0]
 #define Y this->V[1]
@@ -21,6 +22,7 @@ Cvector::Cvector(float x, float y, float z)
 	Z = z;
 	this->V[3] = 1;
 }
+
 
 Cvector::~Cvector()
 {
@@ -58,14 +60,35 @@ float Cvector::GetZ(void) {
 Cvector Cvector::GetOrto(void) {
 	Cmatrix mat;
 	mat.SetOrto();
-	Cvector rt = mat * *this;
+	Cvector rt = mat * (*this);
 	return rt;
 }
 
-Cvector Cvector::GetIzo(float phi) {
+Cvector Cvector::GetIzo() {
 	Cmatrix mat;
+	Cvector rt(this->GetX(), this->GetY(), this->GetZ());
+	mat.SetRotateOY(0.7853981634);
+	rt = mat * rt;
+	mat.SetRotateOX(asin(tan(0.5235987756)));
+	rt = mat * rt;
 	mat.SetOrto();
-	Cvector rt = mat * *this;
+	rt = mat * rt;
+
+	return rt;
+}
+
+Cvector Cvector::GetPersp(float x, float y, float z) {
+	Cmatrix mat;
+	Cvector rt(this->GetX(), this->GetY(), this->GetZ());
+	float theta[3] = { 0, 0, -15 };
+
+	mat.SetRotateOY(0.7853981634);
+	rt = mat * rt;
+	mat.SetRotateOX(asin(tan(0.5235987756)));
+	rt = mat * rt;
+	mat.SetOrto();
+	rt = mat * rt;
+
 	return rt;
 }
 

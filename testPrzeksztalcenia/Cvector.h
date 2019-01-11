@@ -18,6 +18,12 @@ public:
 	float GetY(void);
 	float GetZ(void);
 
+	Cvector GetOrto(void);
+	Cvector GetIzo();
+	Cvector GetPersp(float x, float y, float z);
+
+
+
 	void PrintVector(void);
 
 	Cvector operator + (const Cvector a);

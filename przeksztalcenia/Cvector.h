@@ -19,7 +19,8 @@ public:
 	float GetZ(void);
 
 	Cvector GetOrto(void);
-	Cvector GetIzo(float phi);
+	Cvector GetIzo();
+	Cvector GetPersp(float x, float y, float z);
 
 
 
