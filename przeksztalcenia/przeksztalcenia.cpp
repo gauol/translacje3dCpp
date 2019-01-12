@@ -268,6 +268,10 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	return (INT_PTR)FALSE;
 }
 
+// parametry rzutowania perspektywicznego
+Cvector theta(0, 0, 0);  // oriêtacja kamery
+Cvector C(0, 0, 12);	 // wspolrzedne kamery
+Cvector e(-5, -5, -15);	 // wspolrzedne ekranu wzgledem C
 
 class object {
 	int pointsNumber;
@@ -319,8 +323,8 @@ public:
 			if(i == 8)
 				gr.SetPen(Graphics2D::cl_CYAN, PS_SOLID, 1);
 
-			Cvector pointA = pointsVectors[edges[i].getA()].GetPersp(0, 0, 12);
-			Cvector pointB = pointsVectors[edges[i].getB()].GetPersp(0, 0, 12);
+			Cvector pointA = pointsVectors[edges[i].getA()].GetPersp(theta, C, e);
+			Cvector pointB = pointsVectors[edges[i].getB()].GetPersp(theta, C, e);
 
 			gr.DrawLine(pointA.GetX(), pointA.GetY(), pointB.GetX(), pointB.GetY());
 		}
@@ -331,6 +335,8 @@ public:
 			this->pointsVectors[i] = translacja * this->pointsVectors[i];
 	}
 };
+
+float rotateX = 1.5; 
 
 /*
 	Procedura rysowania w obszarze roboczym okna aplikacji.
@@ -366,15 +372,16 @@ void Paint(HWND hwnd, PAINTSTRUCT * ps)
 
 	kostka.defineEdges(a, b, 12);
 	
+	rotateX = rotateX + (float)0.01;
 
 	Cmatrix transformacja;
 	transformacja.SetTranslate(1, 2, 3);
-	transformacja.SetRotateOY(1.1);
+	transformacja.SetRotateOY(rotateX+1);
 	//transformacja.SetScale(0.9);
 	kostka.affineTransform(transformacja);
 
 	Cmatrix obrot;
-	obrot.SetRotateOX(0.2);
+	obrot.SetRotateOX(rotateX);
 	kostka.affineTransform(obrot);
 
 	Cmatrix skala;

@@ -11,6 +11,7 @@ public:
 	void SetZero(void); //zeruje maciez
 	void SetIdentity(void); // maciez jednostkowa - jedynki na diagonalach
 	void SetOrto();
+	void SetPersp(Cvector e);
 	void SetTranslate(float tx, float ty, float tz);
 	void SetRotateOX(float phi);
 	void SetRotateOY(float phi);
@@ -18,7 +19,9 @@ public:
 	void SetScale(float sx, float sy, float sz);
 	void SetScale(float s);
 
+	#ifdef consoleDebug
 	void PrintMartix();
+	#endif
 
 	Cmatrix operator * (const Cmatrix B);
 	Cvector operator * (const Cvector x);

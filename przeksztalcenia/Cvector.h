@@ -20,11 +20,11 @@ public:
 
 	Cvector GetOrto(void);
 	Cvector GetIzo();
-	Cvector GetPersp(float x, float y, float z);
+	Cvector GetPersp(Cvector theta, Cvector C, Cvector e);
 
-
-
-	//void PrintVector(void);
+	#ifdef consoleDebug
+	void PrintVector(void);
+	#endif
 
 	Cvector operator + (const Cvector a);
 	Cvector operator - (const Cvector a);

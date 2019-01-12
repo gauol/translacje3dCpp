@@ -77,26 +77,39 @@ Cvector Cvector::GetIzo() {
 	return rt;
 }
 
-Cvector Cvector::GetPersp(float x, float y, float z) {
-	Cmatrix mat;
-	Cvector rt(this->GetX(), this->GetY(), this->GetZ());
+Cvector Cvector::GetPersp() {
+	Cmatrix buff;
+	Cvector v(this->GetX(), this->GetY(), this->GetZ());
 
-	mat.SetRotateOY(0.7853981634);
-	rt = mat * rt;
-	mat.SetRotateOX(asin(tan(0.5235987756)));
-	rt = mat * rt;
+	float theta[3] = { 0, 0, 0 };   // oriêtacja kamery
+	Cvector C (0, 0, 12);			// wspolrzedne kamery
+	Cvector e(0, 0, -15);			// wspolrzedne ekranu wzgledem C
 
-	mat.SetOrto();
-	rt = mat * rt;
+	v = v - C;
 
-	return rt;
+	buff.SetRotateOX(theta[0]);	
+	v = buff * v;
+
+	buff.SetRotateOY(theta[1]);
+	v = buff * v; 
+
+	buff.SetRotateOZ(theta[2]);
+	v = buff * v;
+
+	buff.SetPersp(e);
+	v = buff * v;
+
+	v = Cvector(v.V[0] / v.V[3], v.V[1] / v.V[3], 0);
+
+	return v;
 }
 
 
-
+#ifdef consoleDebug
 void Cvector::PrintVector(void) {
-	printf("[%.5f,\t %.5f,\t %.5f,\t %d] \n\r", X, Y, Z, (int)this->V[3]);
+	printf("[%.5f,\t %.5f,\t %.5f,\t %.5f] \n\r", X, Y, Z, this->V[3]);
 }
+#endif
 
 Cvector Cvector::operator + (const Cvector a) {
 	Cvector suma;
@@ -107,7 +120,7 @@ Cvector Cvector::operator + (const Cvector a) {
 
 Cvector Cvector::operator - (const Cvector a) {
 	Cvector roznica;
-	for (int i = 0; i < 4; i++)
-		roznica.V[i] = this->V[i] + a.V[i];
+	for (int i = 0; i < 3; i++)
+		roznica.V[i] = this->V[i] - a.V[i];
 	return roznica;
 }
