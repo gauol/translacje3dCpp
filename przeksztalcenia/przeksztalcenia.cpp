@@ -7,16 +7,21 @@
 #include "WindowRange.h"
 #include "Graphics2D.h"
 #include "Cmatrix.h"
+#include <chrono>
+#include <thread>
+#include <functional>
 
 // U¿ycie przestrzeni nazw "std"
 using namespace std;
 
 #define MAX_LOADSTRING 100
 
+
 // Zmienne globalne:
 HINSTANCE hInst;								// Uchwyt bie¿¹cej instancji (obiektu - okna)
 TCHAR szTitle[MAX_LOADSTRING];					// Tekst na pasku tytu³owym okna
 TCHAR szWindowClass[MAX_LOADSTRING];			// Nazwa klasy okna g³ównego
+HWND hWnd;
 
 WindowRange wr= NULL;	// obiekt klasy WindowRange - do przeskalowywania zakresu okna
 
@@ -25,6 +30,16 @@ ATOM				MyRegisterClass(HINSTANCE hInstance);
 BOOL				InitInstance(HINSTANCE, int);
 LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
+
+// parametry rzutowania perspektywicznego
+Cvector theta(0, 0, 0);  // oriêtacja kamery
+Cvector C(0, 0, 15);	 // wspolrzedne kamery
+Cvector e(-5, -5, -15);	 // wspolrzedne ekranu wzgledem C
+
+//parametry animacji
+float rotateX = 1.5;
+float rotateY = 0.5;
+float rotateZ = 2.5;
 
 void Paint(HWND hwnd, PAINTSTRUCT * ps);
 
@@ -129,6 +144,29 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 	return RegisterClassEx(&wcex); // Rejestruj klasê okna w systemie
 }
 
+
+void timer_start(std::function<void(void)> func, unsigned int interval)
+{
+	std::thread([func, interval]() {
+		while (true)
+		{
+			func();
+			std::this_thread::sleep_for(std::chrono::milliseconds(interval));
+		}
+	}).detach();
+}
+
+
+void do_something()
+{
+	rotateX = rotateX + (float)0.05;
+	rotateZ = rotateZ + (float)0.05;
+	rotateY = rotateY + (float)0.01;
+	RedrawWindow(hWnd, 0, 0, RDW_INVALIDATE | RDW_ERASE);
+	UpdateWindow(hWnd);
+}
+
+
 /*  
 	InitInstance(HINSTANCE hInstance, int nCmdShow)
 	hInstance = Uchwyt okna.
@@ -139,9 +177,8 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 */
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
-	
 
-   HWND hWnd;
+	timer_start(do_something, 30);
 
    hInst = hInstance; // Przechowaj uchwyt okna w zmiennej globalnej
 
@@ -268,11 +305,6 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	return (INT_PTR)FALSE;
 }
 
-// parametry rzutowania perspektywicznego
-Cvector theta(0, 0, 0);  // oriêtacja kamery
-Cvector C(0, 0, 12);	 // wspolrzedne kamery
-Cvector e(-5, -5, -15);	 // wspolrzedne ekranu wzgledem C
-
 class object {
 	int pointsNumber;
 	Cvector * pointsVectors;
@@ -317,11 +349,11 @@ public:
 	void drawObject(Graphics2D gr) {
 		for (int i = 0; i < this->edgesNumbers; i++) {
 			if(i == 0 )
-				gr.SetPen(Graphics2D::cl_RED, PS_SOLID, 1);
+				gr.SetPen(Graphics2D::cl_RED, PS_SOLID, 2);
 			if(i == 4)
-				gr.SetPen(Graphics2D::cl_BLUE, PS_SOLID, 1);
+				gr.SetPen(Graphics2D::cl_BLUE, PS_SOLID, 2);
 			if(i == 8)
-				gr.SetPen(Graphics2D::cl_CYAN, PS_SOLID, 1);
+				gr.SetPen(Graphics2D::cl_CYAN, PS_SOLID, 2);
 
 			Cvector pointA = pointsVectors[edges[i].getA()].GetPersp(theta, C, e);
 			Cvector pointB = pointsVectors[edges[i].getB()].GetPersp(theta, C, e);
@@ -336,7 +368,6 @@ public:
 	}
 };
 
-float rotateX = 1.5; 
 
 /*
 	Procedura rysowania w obszarze roboczym okna aplikacji.
@@ -353,44 +384,39 @@ void Paint(HWND hwnd, PAINTSTRUCT * ps)
 	wr.SetProportional(true);
 	wr.SetRange(-10.0, -10.0, 10.0, 10.0);
 	gr.Update();
-
-	//gr.DrawLine(-10, 0, 10, 0);
-	//gr.DrawLine(0, -10, 0, 10);
 	
 	float x[8] = { 0, 0, 2, 2,	 0, 0, 2, 2 },
 		  y[8] = { 0, 2, 0, 2,	 0, 2, 0, 2 },
 		  z[8] = { 0, 0, 0, 0,	 2, 2, 2, 2 };
-
-	/*float	x[11] = { 0, 0, 2, 2},
-			y[11] = { 0, 2, 0, 2},
-			z[11] = { 0, 0, 0, 2};*/
-
-
 	object kostka(x, y, z, 12);
+
 	int a[12] = {0, 0, 1, 3,	 4, 4, 5, 7,	 0, 1, 2, 3},
 		b[12] = {1, 2, 3, 2,	 5, 6, 7, 6,	 4, 5, 6, 7};
-
 	kostka.defineEdges(a, b, 12);
-	
-	rotateX = rotateX + (float)0.01;
+
 
 	Cmatrix transformacja;
-	transformacja.SetTranslate(1, 2, 3);
-	transformacja.SetRotateOY(rotateX+1);
+	transformacja.SetTranslate(-1, -1, 0);
+	//transformacja.SetRotateOY(rotateX + 1);
 	//transformacja.SetScale(0.9);
 	kostka.affineTransform(transformacja);
 
 	Cmatrix obrot;
 	obrot.SetRotateOX(rotateX);
 	kostka.affineTransform(obrot);
+	obrot.SetRotateOZ(rotateZ);
+	kostka.affineTransform(obrot);
+	obrot.SetRotateOY(rotateY);
+	kostka.affineTransform(obrot);
 
 	Cmatrix skala;
-	skala.SetScale(2,3,4);
+	skala.SetScale(2, 3, 4);
 	kostka.affineTransform(skala);
 	kostka.drawObject(gr);
 
 	//gr.DrawPolygon(x, y, 11);
-	
-	gr.~Graphics2D(); // wywo³anie destruktora obiektu gr
+
+	gr.~Graphics2D(); // wywoanie destruktora obiektu gr
 	ReleaseDC(hwnd, hdc);
+
 }
