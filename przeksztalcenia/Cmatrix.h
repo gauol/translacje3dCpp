@@ -12,12 +12,12 @@ public:
 	void SetIdentity(void); // maciez jednostkowa - jedynki na diagonalach
 	void SetOrto();
 	void SetPersp(Cvector e);
-	void SetTranslate(float tx, float ty, float tz);
-	void SetRotateOX(float phi);
-	void SetRotateOY(float phi);
-	void SetRotateOZ(float phi);
-	void SetScale(float sx, float sy, float sz);
-	void SetScale(float s);
+	Cmatrix SetTranslate(float tx, float ty, float tz);
+	Cmatrix SetRotateOX(float phi);
+	Cmatrix SetRotateOY(float phi);
+	Cmatrix SetRotateOZ(float phi);
+	Cmatrix SetScale(float sx, float sy, float sz);
+	Cmatrix SetScale(float s);
 
 	#ifdef consoleDebug
 	void PrintMartix();

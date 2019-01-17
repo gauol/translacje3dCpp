@@ -46,51 +46,56 @@ void Cmatrix::SetPersp(Cvector e) {
 }
 
 
-void Cmatrix::SetTranslate(float tx, float ty, float tz) {
+Cmatrix Cmatrix::SetTranslate(float tx, float ty, float tz) {
 	this->SetIdentity();
 	Mx[0][3] = tx;  // wpierw wiersz potem kolumna M[wiersz][kolumna]
 	Mx[1][3] = ty;
 	Mx[2][3] = tz;
+	return *this;
 }
 
-void Cmatrix::SetRotateOX(float phi) {
+Cmatrix Cmatrix::SetRotateOX(float phi) {
 	this->SetZero();
 	Mx[1][1] = cosf(phi);
 	Mx[1][2] = -sinf(phi);
 	Mx[2][1] = sinf(phi);
 	Mx[2][2] = cosf(phi);
 	Mx[0][0] = 1;
-
+	return *this;
 }
 
-void Cmatrix::SetRotateOY(float phi) {
+Cmatrix Cmatrix::SetRotateOY(float phi) {
 	this->SetZero();
 	Mx[0][0] = cosf(phi);
 	Mx[0][2] = sinf(phi);
 	Mx[2][0] = -sinf(phi);
 	Mx[2][2] = cosf(phi);
 	Mx[1][1] = 1;
+	return *this;
 }
 
-void Cmatrix::SetRotateOZ(float phi) {
+Cmatrix Cmatrix::SetRotateOZ(float phi) {
 	this->SetZero();
 	Mx[0][0] = cosf(phi);
 	Mx[0][1] = -sinf(phi);
 	Mx[1][0] = sinf(phi);
 	Mx[1][1] = cosf(phi);
 	Mx[2][2] = 1;
+	return *this;
 }
 
-void Cmatrix::SetScale(float sx, float sy, float sz) {
+Cmatrix Cmatrix::SetScale(float sx, float sy, float sz) {
 	this->SetZero();
 	Mx[0][0] = sx;
 	Mx[1][1] = sy;
 	Mx[2][2] = sz;
+	return *this;
 }
 
-void Cmatrix::SetScale(float s) {
+Cmatrix Cmatrix::SetScale(float s) {
 	this->SetZero();
 	Mx[3][3] = 1/s;
+	return *this;
 }
 
 #ifdef consoleDebug

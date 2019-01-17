@@ -16,6 +16,12 @@ using namespace std;
 
 #define MAX_LOADSTRING 100
 
+#define PERSP 1
+#define ORTO 2
+#define IZO 3
+
+#define INTERVAL 50
+
 
 // Zmienne globalne:
 HINSTANCE hInst;								// Uchwyt bie¿¹cej instancji (obiektu - okna)
@@ -40,6 +46,9 @@ Cvector e(-5, -5, -15);	 // wspolrzedne ekranu wzgledem C
 float rotateX = 1.5;
 float rotateY = 0.5;
 float rotateZ = 2.5;
+
+void do_something();
+void timer_start(std::function<void(void)> func, unsigned int interval);
 
 void Paint(HWND hwnd, PAINTSTRUCT * ps);
 
@@ -144,29 +153,6 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 	return RegisterClassEx(&wcex); // Rejestruj klasê okna w systemie
 }
 
-
-void timer_start(std::function<void(void)> func, unsigned int interval)
-{
-	std::thread([func, interval]() {
-		while (true)
-		{
-			func();
-			std::this_thread::sleep_for(std::chrono::milliseconds(interval));
-		}
-	}).detach();
-}
-
-
-void do_something()
-{
-	rotateX = rotateX + (float)0.05;
-	rotateZ = rotateZ + (float)0.05;
-	rotateY = rotateY + (float)0.01;
-	RedrawWindow(hWnd, 0, 0, RDW_INVALIDATE | RDW_ERASE);
-	UpdateWindow(hWnd);
-}
-
-
 /*  
 	InitInstance(HINSTANCE hInstance, int nCmdShow)
 	hInstance = Uchwyt okna.
@@ -178,7 +164,7 @@ void do_something()
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
 
-	timer_start(do_something, 30);
+	timer_start(do_something, INTERVAL);
 
    hInst = hInstance; // Przechowaj uchwyt okna w zmiennej globalnej
 
@@ -305,6 +291,33 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	return (INT_PTR)FALSE;
 }
 
+void timer_start(std::function<void(void)> func, unsigned int interval)
+{
+	std::thread([func, interval]() {
+		while (true)
+		{
+			func();
+			std::this_thread::sleep_for(std::chrono::milliseconds(interval));
+		}
+	}).detach();
+}
+
+
+void do_something()
+{
+	rotateX = rotateX + (float)0.05;
+	rotateZ = rotateZ + (float)0.05;
+	rotateY = rotateY + (float)0.01;
+	if (rotateX >= 6.28)
+		rotateX = 0;
+	if (rotateZ >= 6.28)
+		rotateZ = 0;
+	if (rotateY >= 6.28)
+		rotateY = 0;
+	RedrawWindow(hWnd, 0, 0, RDW_INVALIDATE | RDW_ERASE);
+	UpdateWindow(hWnd);
+}
+
 class object {
 	int pointsNumber;
 	Cvector * pointsVectors;
@@ -340,13 +353,18 @@ public:
 		for (int i = 0; i < this->pointsNumber; i++) this->pointsVectors[i] = Cvector(X[i], Y[i], Z[i]);
 	}
 
+	void freemem() {
+		delete[] this->edges;
+		delete[] this->pointsVectors;
+	}
+
 	void defineEdges(int *a, int *b, int n) {
 		this->edgesNumbers = n;
 		this->edges = new Edge[this->edgesNumbers];
 		for (int i = 0; i < this->edgesNumbers; i++) this->edges[i] = Edge(a[i], b[i]);
 	}
 
-	void drawObject(Graphics2D gr) {
+	object drawObject(Graphics2D gr, int type) {
 		for (int i = 0; i < this->edgesNumbers; i++) {
 			if(i == 0 )
 				gr.SetPen(Graphics2D::cl_RED, PS_SOLID, 2);
@@ -355,11 +373,25 @@ public:
 			if(i == 8)
 				gr.SetPen(Graphics2D::cl_CYAN, PS_SOLID, 2);
 
-			Cvector pointA = pointsVectors[edges[i].getA()].GetPersp(theta, C, e);
-			Cvector pointB = pointsVectors[edges[i].getB()].GetPersp(theta, C, e);
+			Cvector pointA;
+			Cvector pointB;
+
+			if (type == PERSP){
+				pointA = pointsVectors[edges[i].getA()].GetPersp(theta, C, e);
+				pointB = pointsVectors[edges[i].getB()].GetPersp(theta, C, e);
+			}
+			if (type == ORTO){
+				pointA = pointsVectors[edges[i].getA()].GetOrto();
+				pointB = pointsVectors[edges[i].getB()].GetOrto();
+			}
+			if (type == IZO){
+				pointA = pointsVectors[edges[i].getA()].GetIzo();
+				pointB = pointsVectors[edges[i].getB()].GetIzo();
+			}
 
 			gr.DrawLine(pointA.GetX(), pointA.GetY(), pointB.GetX(), pointB.GetY());
 		}
+		return *this;
 	}
 
 	void affineTransform(Cmatrix translacja) {
@@ -374,49 +406,77 @@ public:
 */
 void Paint(HWND hwnd, PAINTSTRUCT * ps)
 {
-
 	// Pobranie uchwytu kontekstu urz¹dzenia na podstawie uchwytu okna
 	HDC hdc= GetDC(hwnd); // lub: HDC hdc= ps->hdc;
 
 	// Utworzenie obiektu klasy Graphics2D za pomoc¹ konstruktora parametrowego dla danego kontekstu i zakresu okna
 	Graphics2D gr(hdc, &wr);
 
+	Cmatrix transformacja;
+	Cmatrix skala;
+	Cmatrix obrot;
 	wr.SetProportional(true);
 	wr.SetRange(-10.0, -10.0, 10.0, 10.0);
 	gr.Update();
-	
+
+	//wiezcholki
 	float x[8] = { 0, 0, 2, 2,	 0, 0, 2, 2 },
 		  y[8] = { 0, 2, 0, 2,	 0, 2, 0, 2 },
 		  z[8] = { 0, 0, 0, 0,	 2, 2, 2, 2 };
-	object kostka(x, y, z, 12);
+	//belki
+	int a[12] = { 0, 0, 1, 3,	 4, 4, 5, 7,	 0, 1, 2, 3 },
+		b[12] = { 1, 2, 3, 2,	 5, 6, 7, 6,	 4, 5, 6, 7 };
 
-	int a[12] = {0, 0, 1, 3,	 4, 4, 5, 7,	 0, 1, 2, 3},
-		b[12] = {1, 2, 3, 2,	 5, 6, 7, 6,	 4, 5, 6, 7};
+	//obiekt perspektywiczny
+	object kostka(x, y, z, 12);
 	kostka.defineEdges(a, b, 12);
 
+	kostka.affineTransform(transformacja.SetTranslate(-1, 1, 0));
+	kostka.affineTransform(obrot.SetRotateOX(rotateX));
+	kostka.affineTransform(obrot.SetRotateOZ(rotateZ));
+	kostka.affineTransform(obrot.SetRotateOY(rotateY));
 
-	Cmatrix transformacja;
-	transformacja.SetTranslate(-1, -1, 0);
-	//transformacja.SetRotateOY(rotateX + 1);
-	//transformacja.SetScale(0.9);
-	kostka.affineTransform(transformacja);
+	kostka.affineTransform(skala.SetScale(2, 2, 2));
+	kostka.affineTransform(transformacja.SetTranslate(-5, 5, 0));
 
-	Cmatrix obrot;
-	obrot.SetRotateOX(rotateX);
-	kostka.affineTransform(obrot);
-	obrot.SetRotateOZ(rotateZ);
-	kostka.affineTransform(obrot);
-	obrot.SetRotateOY(rotateY);
-	kostka.affineTransform(obrot);
+	kostka.drawObject(gr, PERSP).freemem();
+	gr.TextOutW(-3, 0, L"Persp", TA_CENTER);
 
-	Cmatrix skala;
-	skala.SetScale(2, 3, 4);
-	kostka.affineTransform(skala);
-	kostka.drawObject(gr);
+	// obiekt izometryczny
+	object klocek(x, y, z, 12);
+	klocek.defineEdges(a, b, 12);
 
-	//gr.DrawPolygon(x, y, 11);
+	klocek.affineTransform(transformacja.SetTranslate(3, 0, 0));
+	klocek.affineTransform(skala.SetScale(2, 3, 4));
+	
+	klocek.drawObject(gr, IZO).freemem();
+	gr.TextOutW(3, 3, L"Izo", TA_CENTER);
+
+	// obiekt orto
+	object szescian(x, y, z, 12);
+	szescian.defineEdges(a, b, 12);
+
+	szescian.affineTransform(skala.SetScale(1, 2, 3));
+	szescian.affineTransform(obrot.SetRotateOX(1));
+	szescian.affineTransform(obrot.SetRotateOZ(0.5));
+	szescian.affineTransform(obrot.SetRotateOY(1.2));
+	szescian.affineTransform(transformacja.SetTranslate(3, -3, 0));
+	szescian.drawObject(gr, ORTO).freemem();
+	gr.TextOutW(3, -3, L"Orto", TA_CENTER);
+
+	// uklad osi
+	gr.SetPen(Graphics2D::cl_BLUE, PS_SOLID, 2);
+	gr.DrawLine(0, 0, 0, 1);
+	gr.SetPen(Graphics2D::cl_RED, PS_SOLID, 2);
+	gr.DrawLine(0, 0, 1, 0);
+	gr.SetPen(Graphics2D::cl_GREEN, PS_SOLID, 2);
+	gr.DrawLine(0, 0, -0.75, -0.75);
+
+	// opis osi ukladu wsp
+	gr.TextOutW(1, 0, L"X", TA_CENTER);
+	gr.TextOutW(0, 1.2, L"Y", TA_CENTER);
+	gr.TextOutW(-0.6, -0.6, L"Z", TA_CENTER);
 
 	gr.~Graphics2D(); // wywoanie destruktora obiektu gr
 	ReleaseDC(hwnd, hdc);
-
 }
